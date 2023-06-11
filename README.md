@@ -1,5 +1,5 @@
 # yolo-rtsp-security-cam
-Python RTSP security camera app with motion detection features that are based on image processing instead of a dedicated sensor. Also includes YOLO object detection so you can set it to record only specific things such as people, dogs, other animals or particular objects. All that's required is a camera and a PC with a GPU capable of running YOLO.
+Python RTSP security camera app with motion detection features that are based on image processing instead of a dedicated sensor. Also includes YOLO object detection so you can set it to record only specific things such as people, dogs, other animals or particular objects. All that's required is an RTSP camera and a PC with a GPU capable of running YOLO.
 
 ## Getting Started
 
