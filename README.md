@@ -62,7 +62,7 @@ It will create a folder with the current date for storing that day's recordings.
 
 By default, YOLO will run the nano sized model, but you can change this by using the --model argument and specify which sized model you want to run. For example, enter '--model yolov8s' to run the small model, or '--model yolov8m' to run the medium model, and so on. See the official YOLOv8 repo for more info on these models: https://github.com/ultralytics/ultralytics
 
-Larger models will provide better detection results, but will also require more memory and processing power. I recommend sticking with the default nano model, or the small model, because anything larger will have major diminishing returns.
+Larger models will provide better detection results, but will also require more memory and processing power. I recommend sticking with the default nano model or the small model, because anything larger will have major diminishing returns.
 
 If you'd like to run the program without YOLO so that it only records based on motion detection, simply omit the --yolo argument. Doing this will make the app run exactly the same as the previous version I made here: https://github.com/PhazerTech/rtsp-security-cam
 
