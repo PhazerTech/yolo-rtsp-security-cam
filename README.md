@@ -41,7 +41,7 @@ To run it with default settings, enter the following and replace 'ip:port/stream
 python3 yolo-rtsp-security-cam.py --stream rtsp://ip:port/stream-name --yolo person,dog,cat
 ```
 
-To open a window where you can view the stream while the program is running, include the --monitor argument.
+To open a window where you can view the stream while the program is running, include the --monitor argument. The YOLO bounding boxes and class IDs will be drawn on the stream in this window, however the recordings will not include these bounding boxes, only the raw stream will be recorded.
 
 ```bash
 python3 yolo-rtsp-security-cam.py --stream rtsp://ip:port/stream-name --yolo person,dog,cat --monitor
