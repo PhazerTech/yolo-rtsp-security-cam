@@ -1,8 +1,6 @@
 # yolo-rtsp-security-cam
 Python RTSP security camera app with motion detection features that are based on image processing instead of a dedicated sensor. Also includes YOLO object detection so you can set it to record only specific things such as people, dogs, other animals or particular objects. All that's required is a camera and a PC with a GPU capable of running YOLO.
 
-I also made another version of this app without YOLO object detection that's lightweight and able to run on a Raspberry Pi 4. Check it out here: https://github.com/PhazerTech/rtsp-security-cam
-
 ## Getting Started
 
 To get started, first make sure your system has the required software. If using a Debian/Ubuntu based distro, you can install the required software with the following:
@@ -66,15 +64,15 @@ By default, YOLO will run the nano sized model, but you can change this by using
 
 Larger models will provide better detection results, but will also require more memory and processing power. I recommend sticking with the default nano model, or the small model, because anything larger will have major diminishing returns.
 
-If you'd like to run the program without YOLO so that it only records based on motion detection, simply omit the --yolo argument.
+If you'd like to run the program without YOLO so that it only records based on motion detection, simply omit the --yolo argument. Doing this will make the app run exactly the same as the previous version I made here: https://github.com/PhazerTech/rtsp-security-cam
 
 ## Advanced Settings
 
 The program doesn't constantly run YOLO object detection, instead it constantly detects motion and only starts the YOLO object detection if it detects motion first. If the default motion detection settings are providing poor results, additional arguments can be provided to tweak the sensitivity of the motion detection algorithm and to enable testing mode which helps to find the optimal threshold value.
 
---threshold - Threshold value determines the amount of motion required to trigger a recording. Higher values decrease sensitivity to help reduce false positives. Default is 350. Max is 10000.
+--threshold - Threshold value determines the amount of motion required to trigger a recording. Higher values decrease sensitivity to help reduce false positives. If using YOLO detection, false positives are less of a concern so the default value should be fine in most cases. Default is 350. Max is 10000.
 
---start_frames - The number of consecutive frames with motion activity required to start a recording. Raising this value might help if there's too many false positive recordings, especially when using a high frame rate stream greater than 30 FPS. Default is 3. Max is 30.
+--start_frames - The number of consecutive frames with motion activity required to start a recording. Raising this value might help if there's too many false positive recordings, especially when using a high frame rate stream greater than 30 FPS. But again, if using YOLO then the default value should be fine. Default is 3. Max is 30.
 
 --tail_length - The number of seconds without motion activity required to stop a recording. Raising this value might help if the recordings are stopping too early. Default is 8. Max is 30.
 
