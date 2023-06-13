@@ -16,7 +16,7 @@ CUDA Guide: https://phazertech.com/tutorials/cuda.html
 
 ROCm Guide: https://phazertech.com/tutorials/rocm.html
 
-It might be possible to run YOLO on the CPU, but it will be very slow and I didn't test it, so you're highly encouraged to use GPU acceleration.
+It might be possible to run YOLO on the CPU, but it will be slow and I didn't test it, so you're highly encouraged to use GPU acceleration.
 
 Next, clone this repository:
 
@@ -62,13 +62,11 @@ It will create a folder with the current date for storing that day's recordings.
 
 By default, YOLO will run the nano sized model, but you can change this by using the --model argument and specify which sized model you want to run. For example, enter '--model yolov8s' to run the small model, or '--model yolov8m' to run the medium model, and so on. See the official YOLOv8 repo for more info on these models: https://github.com/ultralytics/ultralytics
 
-Larger models will provide better detection results, but will also require more memory and processing power. I recommend sticking with the default nano model or the small model, because anything larger will have major diminishing returns.
-
-If you'd like to run the program without YOLO so that it only records based on motion detection, simply omit the --yolo argument. Doing this will make the app extremely lightweight and able to run on low power devices such as a Raspberry Pi 4, exactly like the previous version of the app I made here: https://github.com/PhazerTech/rtsp-security-cam
+Larger models will provide better detection results, but will also require more memory and processing power. I recommend sticking with the default nano model or the small model, because anything larger will have major diminishing returns.  If you'd like to run the program without YOLO so that it only records based on motion detection, simply omit the --yolo argument. Doing this will make the app extremely lightweight and able to run on low power devices such as a Raspberry Pi 4, exactly like the previous version of the app I made here: https://github.com/PhazerTech/rtsp-security-cam
 
 ## Advanced Settings
 
-The program doesn't constantly run YOLO object detection, instead it constantly detects motion and only starts the YOLO object detection if it detects motion first. If the default motion detection settings are providing poor results, additional arguments can be provided to tweak the sensitivity of the motion detection algorithm and to enable testing mode which helps to find the optimal threshold value.
+The program doesn't constantly run YOLO object detection, instead it constantly detects motion and only starts the YOLO object detection if it detects motion first. It works this way in order to be more power efficient.  If the default motion detection settings are providing poor results, additional arguments can be provided to tweak the sensitivity of the motion detection algorithm and to enable testing mode which helps to find the optimal threshold value, but in most cases this shouldn't be necessary.
 
 --threshold - Threshold value determines the amount of motion required to trigger a recording. Higher values decrease sensitivity to help reduce false positives. If using YOLO detection, false positives are less of a concern so the default value should be fine in most cases. Default is 350. Max is 10000.
 
