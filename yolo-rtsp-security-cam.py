@@ -2,7 +2,7 @@
 # All rights reserved.
 
 # View the GNU AFFERO license found in the
-# LICENSE file in the root directory of this source tree.
+# LICENSE file in the root directory.
 
 import time
 import os
@@ -48,6 +48,7 @@ if args["yolo"]:
 else:
     yolo_on = False
 
+# Set up variables for YOLO detection
 if yolo_on:
     from ultralytics import YOLO
     stop_error = False
@@ -59,6 +60,7 @@ if yolo_on:
     colors = np.random.randint(0, 255, size=(len(labels), 3), dtype="uint8")
     model = YOLO(args["model"]+".pt")
 
+    # Check if the user provided list has valid objects
     for coconame in yolo_list:
         if coconame not in labels:
             print("Error! '"+coconame+"' not found in coco.names")
@@ -66,7 +68,7 @@ if yolo_on:
     if stop_error:
         exit("Exiting")
 
-# set up other internal variables
+# Set up other internal variables
 cap = cv2.VideoCapture(rtsp_stream)
 fps = cap.get(cv2.CAP_PROP_FPS)
 period = 1/fps
@@ -89,7 +91,7 @@ if monitor:
     cv2.namedWindow('motion detection cam', cv2.WINDOW_NORMAL)
 
 q = queue.Queue()
-# thread for receiving the stream's frames so they can be processed
+# Thread for receiving the stream's frames so they can be processed
 def receive_frames():
     if cap.isOpened():
         ret, frame = cap.read()
@@ -99,11 +101,11 @@ def receive_frames():
             if ret:
                 q.put(frame)
 
-# record the stream when motion is detected
+# Record the stream when object is detected
 def start_ffmpeg():
     ffmpeg_copy.execute()
 
-# functions for detecting key presses
+# Functions for detecting key presses
 def press(key):
     global loop
     if key == 'q':
@@ -114,19 +116,19 @@ def input_keyboard():
         on_press=press,
     )
 
-# YOLO object detection
+# Process YOLO object detection
 def process_yolo():
     global img
 
     results = model.predict(img, conf=CONFIDENCE, verbose=False)[0]
     object_found = False
 
-    # loop over the detections
+    # Loop over the detections
     for data in results.boxes.data.tolist():
-        # get the bounding box coordinates, confidence, and class id
+        # Get the bounding box coordinates, confidence, and class id
         xmin, ymin, xmax, ymax, confidence, class_id = data
 
-        # converting the coordinates and the class id to integers
+        # Converting the coordinates and the class id to integers
         xmin = int(xmin)
         ymin = int(ymin)
         xmax = int(xmax)
@@ -136,55 +138,55 @@ def process_yolo():
         if labels[class_id] in yolo_list:
             object_found = True
 
-        # draw a bounding box rectangle and label on the image
+        # Draw a bounding box rectangle and label on the image
         color = [int(c) for c in colors[class_id]]
         cv2.rectangle(img, (xmin, ymin), (xmax, ymax), color=color, thickness=thickness)
         text = f"{labels[class_id]}: {confidence:.2f}"
-        # calculate text width & height to draw the transparent boxes as background of the text
+        # Calculate text width & height to draw the transparent boxes as background of the text
         (text_width, text_height) = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, fontScale=font_scale, thickness=thickness)[0]
         text_offset_x = xmin
         text_offset_y = ymin - 5
         box_coords = ((text_offset_x, text_offset_y), (text_offset_x + text_width + 2, text_offset_y - text_height))
         overlay = img.copy()
         cv2.rectangle(overlay, box_coords[0], box_coords[1], color=color, thickness=cv2.FILLED)
-        # add opacity (transparency to the box)
+        # Add opacity (transparency to the box)
         img = cv2.addWeighted(overlay, 0.6, img, 0.4, 0)
-        # now put the text (label: confidence %)
+        # Now put the text (label: confidence %)
         cv2.putText(img, text, (xmin, ymin - 5), cv2.FONT_HERSHEY_SIMPLEX,
             fontScale=font_scale, color=(0, 0, 0), thickness=thickness)
 
     return object_found
 
 
-# start the background threads
+# Start the background threads
 receive_thread = threading.Thread(target=receive_frames)
 receive_thread.start()
 keyboard_thread = threading.Thread(target=input_keyboard)
 keyboard_thread.start()
 
-# main loop
+# Main loop
 while loop:
     if q.empty() != True:
         img = q.get()
 
-        # resize image, make it grayscale, then blur it
+        # Resize image, make it grayscale, then blur it
         resized_frame = cv2.resize(img, res)
         gray_frame = cv2.cvtColor(resized_frame,cv2.COLOR_BGR2GRAY)
         final_frame = cv2.GaussianBlur(gray_frame, (5,5), 0)
 
-        # calculate difference between current and previous frame, then get ssim value
+        # Calculate difference between current and previous frame, then get ssim value
         diff = cv2.absdiff(final_frame, old_frame)
         result = cv2.threshold(diff, 5, 255, cv2.THRESH_BINARY)[1]
         ssim_val = int(ssim(result,blank))
         old_frame = final_frame
 
-        # print value for testing mode
+        # Print value for testing mode
         if testing and ssim_val > thresh:
             print("motion: "+ str(ssim_val))
 
-        # count the number of frames where the ssim value exceeds the threshold value
-        # if the number of frames exceeds start_frames value, then run object detection
-        # start recording if an object on the user provided list is detected
+        # Count the number of frames where the ssim value exceeds the threshold value.
+        # If the number of these frames exceeds start_frames value, run YOLO detection.
+        # Start recording if an object from the user provided list is detected
         if not recording:
             if ssim_val > thresh:
                 activity_count += 1
@@ -216,7 +218,7 @@ while loop:
             else:
                 activity_count = 0
 
-        # if already recording, count the number of frames where there's no motion activity
+        # If already recording, count the number of frames where there's no motion activity
         # or no object detected and stop recording if it exceeds the tail_length value
         else:
             if yolo_on and not process_yolo() and ssim_val < thresh or not yolo_on and ssim_val < thresh:
@@ -228,8 +230,8 @@ while loop:
                         ffmpeg_thread.join()
                         ffmpeg_copy = 0
                         print(filedate + " recording stopped")
-                        # delete recording if total length is equal to the tail_length value,
-                        # indicating a false positive
+                        # If auto_delete argument was provided, delete recording if total
+                        # length is equal to the tail_length value, indicating a false positive
                         if auto_delete:
                             recorded_file = cv2.VideoCapture(filename)
                             recorded_frames = recorded_file.get(cv2.CAP_PROP_FRAME_COUNT)
@@ -243,7 +245,7 @@ while loop:
             else:
                 activity_count = 0
 
-        # monitor the stream
+        # Monitor the stream
         if monitor:
             cv2.imshow('motion detection cam', img)
             if frame_click:
@@ -258,7 +260,7 @@ while loop:
     else:
         time.sleep(period/2)
 
-# gracefully end threads
+# Gracefully end threads and exit
 stop_listening()
 if ffmpeg_copy:
     ffmpeg_copy.terminate()
