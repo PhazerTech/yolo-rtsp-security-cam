@@ -80,7 +80,7 @@ The program doesn't constantly run YOLO object detection, instead it constantly 
 
 --frame_click - Allows the user to advance frames one by one by pressing any key. For use with testing mode on video files, not live streams, so make sure to provide a video file instead of an RTSP address for the --stream argument if using this feature.
 
-Check out my video about this app on my YouTube channel for more details: https://youtu.be/hObJf4YADLQ
+Check out my video about this app on my YouTube channel for more details: https://youtu.be/m8dIJN6ePKA
 
 ## Contact
 
