@@ -84,9 +84,11 @@ The program doesn't constantly run YOLO object detection, instead it constantly 
 
 Check out my video about this app on my YouTube channel for more details: https://youtu.be/m8dIJN6ePKA
 
-## Contact
+## Contact & Support
 
-If you have any questions feel free to contact me at https://phazertech.com/contact.html
+If you found value in this software then consider supporting me: https://phazertech.com/funding.html
+
+If you have any questions feel free to contact me: https://phazertech.com/contact.html
 
 ## Copyright
 
