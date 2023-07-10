@@ -78,6 +78,7 @@ recording = False
 ffmpeg_copy = 0
 ffmpeg_proc = 0
 activity_count = 0
+yolo_count = 0
 ret, img = cap.read()
 if img.shape[1]/img.shape[0] > 1.55:
     res = (256,144)
@@ -191,7 +192,12 @@ while loop:
             if ssim_val > thresh:
                 activity_count += 1
                 if activity_count >= start_frames:
-                    if not yolo_on or yolo_on and process_yolo():
+                    if yolo_on:
+                        if process_yolo():
+                            yolo_count += 1
+                        else:
+                            yolo_count = 0
+                    if not yolo_on or yolo_count > 1:
                         filedate = datetime.now().strftime('%H-%M-%S')
                         if not testing:
                             folderdate = datetime.now().strftime('%Y-%m-%d')
@@ -215,13 +221,15 @@ while loop:
                             print(filedate + " recording started - Testing mode")
                         recording = True
                         activity_count = 0
+                        yolo_count = 0
             else:
                 activity_count = 0
+                yolo_count = 0
 
         # If already recording, count the number of frames where there's no motion activity
         # or no object detected and stop recording if it exceeds the tail_length value
         else:
-            if yolo_on and not process_yolo() and ssim_val < thresh or not yolo_on and ssim_val < thresh:
+            if yolo_on and not process_yolo() or not yolo_on and ssim_val < thresh:
                 activity_count += 1
                 if activity_count >= tail_length:
                     filedate = datetime.now().strftime('%H-%M-%S')
