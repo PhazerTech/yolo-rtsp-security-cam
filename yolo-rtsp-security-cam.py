@@ -69,14 +69,13 @@ if yolo_on:
         exit("Exiting")
 
 # Set up other internal variables
+loop = True
 cap = cv2.VideoCapture(rtsp_stream)
 fps = cap.get(cv2.CAP_PROP_FPS)
 period = 1/fps
 tail_length = tail_length*fps
-loop = True
 recording = False
 ffmpeg_copy = 0
-ffmpeg_proc = 0
 activity_count = 0
 yolo_count = 0
 ret, img = cap.read()
@@ -89,7 +88,7 @@ resized_frame = cv2.resize(img, res)
 gray_frame = cv2.cvtColor(resized_frame,cv2.COLOR_BGR2GRAY)
 old_frame = cv2.GaussianBlur(gray_frame, (5,5), 0)
 if monitor:
-    cv2.namedWindow('motion detection cam', cv2.WINDOW_NORMAL)
+    cv2.namedWindow(rtsp_stream, cv2.WINDOW_NORMAL)
 
 q = queue.Queue()
 # Thread for receiving the stream's frames so they can be processed
@@ -116,6 +115,32 @@ def input_keyboard():
     listen_keyboard(
         on_press=press,
     )
+
+def timer():
+    delay = False
+    period = 1
+    now = datetime.now()
+    now_time = now.time()
+    start1 = now_time.replace(hour=0, minute=0, second=0, microsecond=0)
+    start2 = now_time.replace(hour=0, minute=0, second=1, microsecond=10000)
+    start_t=time.time()
+    while loop:
+        now = datetime.now()
+        now_time = now.time()
+        if(now_time>=start1 and now_time<=start2):
+            day_num = now.weekday()
+            if day_num == 0: print("Monday "+now.strftime('%m-%d-%Y'))
+            elif day_num == 1: print("Tuesday "+now.strftime('%m-%d-%Y'))
+            elif day_num == 2: print("Wednesday "+now.strftime('%m-%d-%Y'))
+            elif day_num == 3: print("Thursday "+now.strftime('%m-%d-%Y'))
+            elif day_num == 4: print("Friday "+now.strftime('%m-%d-%Y'))
+            elif day_num == 5: print("Saturday "+now.strftime('%m-%d-%Y'))
+            elif day_num == 6: print("Sunday "+now.strftime('%m-%d-%Y'))
+            delay = True
+        time.sleep(period - ((time.time() - start_t) % period))
+        if delay:
+            delay = False
+            time.sleep(period - ((time.time() - start_t) % period))
 
 # Process YOLO object detection
 def process_yolo():
@@ -164,6 +189,8 @@ receive_thread = threading.Thread(target=receive_frames)
 receive_thread.start()
 keyboard_thread = threading.Thread(target=input_keyboard)
 keyboard_thread.start()
+timer_thread = threading.Thread(target=timer)
+timer_thread.start()
 
 # Main loop
 while loop:
@@ -212,7 +239,7 @@ while loop:
                                     rtsp_transport="tcp",
                                     rtsp_flags="prefer_tcp",
                                 )
-                                .output(filename, vcodec="copy")
+                                .output(filename, vcodec="copy", acodec="copy")
                             )
                             ffmpeg_thread = threading.Thread(target=start_ffmpeg)
                             ffmpeg_thread.start()
@@ -255,7 +282,7 @@ while loop:
 
         # Monitor the stream
         if monitor:
-            cv2.imshow('motion detection cam', img)
+            cv2.imshow(rtsp_stream, img)
             if frame_click:
                 cv_key = cv2.waitKey(0) & 0xFF
                 if cv_key == ord("q"):
@@ -275,5 +302,6 @@ if ffmpeg_copy:
     ffmpeg_thread.join()
 receive_thread.join()
 keyboard_thread.join()
+timer_thread.join()
 cv2.destroyAllWindows()
 print("Exiting")
