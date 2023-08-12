@@ -103,7 +103,12 @@ def receive_frames():
 
 # Record the stream when object is detected
 def start_ffmpeg():
-    ffmpeg_copy.execute()
+    try:
+        ffmpeg_copy.execute()
+    except:
+        print("Issue recording the stream. Trying again.")
+        time.sleep(1)
+        ffmpeg_copy.execute()
 
 # Functions for detecting key presses
 def press(key):
