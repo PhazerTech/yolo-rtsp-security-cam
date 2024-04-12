@@ -58,7 +58,7 @@ $ python3 yolo-rtsp-security-cam.py --stream rtsp://192.168.0.156:8554/frontdoor
 14-01-09 recording stopped
 ```
 
-It will create a folder with the current date for storing that day's recordings. A new folder will be created each day with the current date so that it can be left to run indefinitely. Press the 'Q' key to quit the program.
+It will create a folder with the current date for storing that day's recordings. A new folder will be created each day with the current date so that it can be left to run indefinitely. Press the 'Q' key to quit the program. If your IP camera disconnects for some reason, the program will indicate this and attempt to reconnect every 5 seconds.
 
 By default, YOLO will run the nano sized model, but you can change this by using the --model argument and specify which sized model you want to run. For example, enter '--model yolov8s' to run the small model, or '--model yolov8m' to run the medium model, and so on. See the official YOLOv8 repo for more info on these models: https://github.com/ultralytics/ultralytics
 

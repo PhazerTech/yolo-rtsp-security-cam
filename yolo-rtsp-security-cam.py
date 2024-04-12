@@ -6,6 +6,7 @@
 
 import time
 import os
+import sys
 import cv2
 import queue
 import threading
@@ -15,6 +16,31 @@ from ffmpeg import FFmpeg
 from skimage.metrics import mean_squared_error as ssim
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, BooleanOptionalAction
 from sshkeyboard import listen_keyboard, stop_listening
+
+class suppress_stdout_stderr(object):
+    def __enter__(self):
+        self.outnull_file = open(os.devnull, 'w')
+        self.errnull_file = open(os.devnull, 'w')
+        self.old_stdout_fileno_undup    = sys.stdout.fileno()
+        self.old_stderr_fileno_undup    = sys.stderr.fileno()
+        self.old_stdout_fileno = os.dup ( sys.stdout.fileno() )
+        self.old_stderr_fileno = os.dup ( sys.stderr.fileno() )
+        self.old_stdout = sys.stdout
+        self.old_stderr = sys.stderr
+        os.dup2 ( self.outnull_file.fileno(), self.old_stdout_fileno_undup )
+        os.dup2 ( self.errnull_file.fileno(), self.old_stderr_fileno_undup )
+        sys.stdout = self.outnull_file
+        sys.stderr = self.errnull_file
+        return self
+    def __exit__(self, *_):
+        sys.stdout = self.old_stdout
+        sys.stderr = self.old_stderr
+        os.dup2 ( self.old_stdout_fileno, self.old_stdout_fileno_undup )
+        os.dup2 ( self.old_stderr_fileno, self.old_stderr_fileno_undup )
+        os.close ( self.old_stdout_fileno )
+        os.close ( self.old_stderr_fileno )
+        self.outnull_file.close()
+        self.errnull_file.close()
 
 # Parse command line arguments
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
@@ -93,13 +119,25 @@ if monitor:
 q = queue.Queue()
 # Thread for receiving the stream's frames so they can be processed
 def receive_frames():
+    global cap
     if cap.isOpened():
         ret, frame = cap.read()
-    while ret and loop:
-        if cap.isOpened():
+        while loop:
             ret, frame = cap.read()
             if ret:
                 q.put(frame)
+            else:
+                if recording: stop_ffmpeg()
+                now_time = datetime.now().strftime('%H-%M-%S')
+                print(now_time + " Camera disconnected. Attempting to reconnect.")
+                while loop:
+                    with suppress_stdout_stderr():
+                        cap = cv2.VideoCapture(rtsp_stream)
+                    if cap.isOpened():
+                        now_time = datetime.now().strftime('%H-%M-%S')
+                        print(now_time + " Camera successfully reconnected.")
+                        break
+                    else: time.sleep(5)
 
 # Record the stream when object is detected
 def start_ffmpeg():
@@ -109,6 +147,12 @@ def start_ffmpeg():
         print("Issue recording the stream. Trying again.")
         time.sleep(1)
         ffmpeg_copy.execute()
+
+def stop_ffmpeg():
+    global ffmpeg_copy, recording
+    ffmpeg_copy.terminate()
+    ffmpeg_copy = 0
+    recording = False
 
 # Functions for detecting key presses
 def press(key):
@@ -123,7 +167,7 @@ def input_keyboard():
 
 def timer():
     delay = False
-    period = 1
+    period = 2
     now = datetime.now()
     now_time = now.time()
     start1 = now_time.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -266,9 +310,8 @@ while loop:
                 if activity_count >= tail_length:
                     filedate = datetime.now().strftime('%H-%M-%S')
                     if not testing:
-                        ffmpeg_copy.terminate()
+                        stop_ffmpeg()
                         ffmpeg_thread.join()
-                        ffmpeg_copy = 0
                         print(filedate + " recording stopped")
                         # If auto_delete argument was provided, delete recording if total
                         # length is equal to the tail_length value, indicating a false positive
