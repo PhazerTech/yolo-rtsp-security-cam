@@ -17,31 +17,6 @@ from skimage.metrics import mean_squared_error as ssim
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, BooleanOptionalAction
 from sshkeyboard import listen_keyboard, stop_listening
 
-class suppress_stdout_stderr(object):
-    def __enter__(self):
-        self.outnull_file = open(os.devnull, 'w')
-        self.errnull_file = open(os.devnull, 'w')
-        self.old_stdout_fileno_undup    = sys.stdout.fileno()
-        self.old_stderr_fileno_undup    = sys.stderr.fileno()
-        self.old_stdout_fileno = os.dup ( sys.stdout.fileno() )
-        self.old_stderr_fileno = os.dup ( sys.stderr.fileno() )
-        self.old_stdout = sys.stdout
-        self.old_stderr = sys.stderr
-        os.dup2 ( self.outnull_file.fileno(), self.old_stdout_fileno_undup )
-        os.dup2 ( self.errnull_file.fileno(), self.old_stderr_fileno_undup )
-        sys.stdout = self.outnull_file
-        sys.stderr = self.errnull_file
-        return self
-    def __exit__(self, *_):
-        sys.stdout = self.old_stdout
-        sys.stderr = self.old_stderr
-        os.dup2 ( self.old_stdout_fileno, self.old_stdout_fileno_undup )
-        os.dup2 ( self.old_stderr_fileno, self.old_stderr_fileno_undup )
-        os.close ( self.old_stdout_fileno )
-        os.close ( self.old_stderr_fileno )
-        self.outnull_file.close()
-        self.errnull_file.close()
-
 # Parse command line arguments
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
 parser.add_argument("--stream", type=str, help="RTSP address of video stream.")
@@ -116,8 +91,35 @@ old_frame = cv2.GaussianBlur(gray_frame, (5,5), 0)
 if monitor:
     cv2.namedWindow(rtsp_stream, cv2.WINDOW_NORMAL)
 
+# used to suppress C errors from ffmpeg library when trying to reconnect camera
+class suppress_stdout_stderr(object):
+    def __enter__(self):
+        self.outnull_file = open(os.devnull, 'w')
+        self.errnull_file = open(os.devnull, 'w')
+        self.old_stdout_fileno_undup    = sys.stdout.fileno()
+        self.old_stderr_fileno_undup    = sys.stderr.fileno()
+        self.old_stdout_fileno = os.dup ( sys.stdout.fileno() )
+        self.old_stderr_fileno = os.dup ( sys.stderr.fileno() )
+        self.old_stdout = sys.stdout
+        self.old_stderr = sys.stderr
+        os.dup2 ( self.outnull_file.fileno(), self.old_stdout_fileno_undup )
+        os.dup2 ( self.errnull_file.fileno(), self.old_stderr_fileno_undup )
+        sys.stdout = self.outnull_file
+        sys.stderr = self.errnull_file
+        return self
+    def __exit__(self, *_):
+        sys.stdout = self.old_stdout
+        sys.stderr = self.old_stderr
+        os.dup2 ( self.old_stdout_fileno, self.old_stdout_fileno_undup )
+        os.dup2 ( self.old_stderr_fileno, self.old_stderr_fileno_undup )
+        os.close ( self.old_stdout_fileno )
+        os.close ( self.old_stderr_fileno )
+        self.outnull_file.close()
+        self.errnull_file.close()
+
 q = queue.Queue()
 # Thread for receiving the stream's frames so they can be processed
+# If camera disconnects it will automatically try to reconnect every 5 seconds
 def receive_frames():
     global cap
     if cap.isOpened():
