@@ -173,7 +173,7 @@ def timer():
     now = datetime.now()
     now_time = now.time()
     start1 = now_time.replace(hour=0, minute=0, second=0, microsecond=0)
-    start2 = now_time.replace(hour=0, minute=0, second=1, microsecond=10000)
+    start2 = now_time.replace(hour=0, minute=0, second=2, microsecond=10000)
     start_t=time.time()
     while loop:
         now = datetime.now()
